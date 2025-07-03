@@ -86,35 +86,6 @@ DESCRIPTION
   nullable    = false
 }
 
-#TODO - Can we review this with the PG to determine if they intend to improve the target representation? (single value CIDR syntax as an option?)
-variable "cache_firewall_rules" {
-  type = map(object({
-    name     = string
-    start_ip = string
-    end_ip   = string
-  }))
-  default     = {}
-  description = <<DESCRIPTION
-A map of objects defining one or more Redis Cache firewall rules.
-- `<map key>` - The map key is deliberately arbitrary to avoid issues where map keys may be unknown at plan time.
-  - `name` - (Required) - The name for the firewall rule
-  - `start_ip` - (Required) - The starting IP Address for clients that are allowed to access the Redis Cache.
-  - `end_ip` - (Required) - The ending IP Address for clients that are allowed to access the Redis Cache.
-
-Example Input:
-
-```hcl
-cache_firewall_rules = {
-  rule_1 = {
-    name = "thisRule"
-    start_ip = "10.0.0.1"
-    end_ip = "10.0.0.5"
-  }
-}
-```
-DESCRIPTION
-  nullable    = false
-}
 
 variable "capacity" {
   type        = number
@@ -122,75 +93,10 @@ variable "capacity" {
   description = "(Required) - The size of the Redis Cache to deploy.  Valid values for Basic and Standard skus are 0-6, and for the premium sku is 1-5"
 }
 
-variable "diagnostic_settings" {
-  type = map(object({
-    name                                     = optional(string, null)
-    log_categories                           = optional(set(string), [])
-    log_groups                               = optional(set(string), ["allLogs"])
-    metric_categories                        = optional(set(string), ["AllMetrics"])
-    log_analytics_destination_type           = optional(string, "Dedicated")
-    workspace_resource_id                    = optional(string, null)
-    storage_account_resource_id              = optional(string, null)
-    event_hub_authorization_rule_resource_id = optional(string, null)
-    event_hub_name                           = optional(string, null)
-    marketplace_partner_resource_id          = optional(string, null)
-  }))
-  default     = {}
-  description = <<DESCRIPTION
-A map of diagnostic settings to create on the Key Vault. The map key is deliberately arbitrary to avoid issues where map keys maybe unknown at plan time.
-
-- `name` - (Optional) The name of the diagnostic setting. One will be generated if not set, however this will not be unique if you want to create multiple diagnostic setting resources.
-- `log_categories` - (Optional) A set of log categories to send to the log analytics workspace. Defaults to `[]`.
-- `log_groups` - (Optional) A set of log groups to send to the log analytics workspace. Defaults to `["allLogs"]`.
-- `metric_categories` - (Optional) A set of metric categories to send to the log analytics workspace. Defaults to `["AllMetrics"]`.
-- `log_analytics_destination_type` - (Optional) The destination type for the diagnostic setting. Possible values are `Dedicated` and `AzureDiagnostics`. Defaults to `Dedicated`.
-- `workspace_resource_id` - (Optional) The resource ID of the log analytics workspace to send logs and metrics to.
-- `storage_account_resource_id` - (Optional) The resource ID of the storage account to send logs and metrics to.
-- `event_hub_authorization_rule_resource_id` - (Optional) The resource ID of the event hub authorization rule to send logs and metrics to.
-- `event_hub_name` - (Optional) The name of the event hub. If none is specified, the default event hub will be selected.
-- `marketplace_partner_resource_id` - (Optional) The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic LogsLogs.
-
-Example Input:
-
-```hcl
-diagnostic_settings = {
-  diag_setting_1 = {
-    name                           = "diagSetting1"
-    log_groups                     = ["allLogs"]
-    metric_categories              = ["AllMetrics"]
-    log_analytics_destination_type = null
-    workspace_resource_id          = azurerm_log_analytics_workspace.this_workspace.id
-  }
-}
-```
-DESCRIPTION
-  nullable    = false
-
-  validation {
-    condition = alltrue(
-      [
-        for _, v in var.diagnostic_settings :
-        v.workspace_resource_id != null || v.storage_account_resource_id != null || v.event_hub_authorization_rule_resource_id != null || v.marketplace_partner_resource_id != null
-      ]
-    )
-    error_message = "At least one of `workspace_resource_id`, `storage_account_resource_id`, `marketplace_partner_resource_id`, or `event_hub_authorization_rule_resource_id`, must be set."
-  }
-}
-
 variable "enable_non_ssl_port" {
   type        = bool
   default     = false
   description = "(Optional) - Enable the non-ssl port 6379.  Disabled by default"
-}
-
-variable "enable_telemetry" {
-  type        = bool
-  default     = true
-  description = <<DESCRIPTION
-This variable controls whether or not telemetry is enabled for the module.
-For more information see <https://aka.ms/avm/telemetryinfo>.
-If it is set to false, then no telemetry will be collected.
-DESCRIPTION
 }
 
 #TODO: Determine the valid linking hierarchies. We will create linkages assuming this instance is the primary.
